@@ -28,7 +28,21 @@ app.use(express.json());
 
 // Serve index.html as the default route
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, 'client', 'index.html'));
+  const filePath = path.join(__dirname, 'client', 'index.html');
+  console.log(`Serving index.html from: ${filePath}`);
+  if (require('fs').existsSync(filePath)) {
+    res.sendFile(filePath);
+  } else {
+    console.error(`File not found: ${filePath}`);
+    res.status(404).send('Index.html not found on server');
+  }
+});
+
+// Fallback for all other routes (useful for client-side routing)
+app.get('*', (req, res) => {
+  const filePath = path.join(__dirname, 'client', 'index.html');
+  console.log(`Fallback route hit, serving: ${filePath}`);
+  res.sendFile(filePath);
 });
 
 app.post('/create-room', (req, res) => {
