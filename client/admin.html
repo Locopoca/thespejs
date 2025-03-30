@@ -1,0 +1,75 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Panel</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <div id="app">
+    <header>
+      <h1>Admin Panel</h1>
+      <button onclick="window.location.href='/'">Back to Main</button>
+    </header>
+    <div id="admin-login" class="modal">
+      <h2>Login</h2>
+      <input id="admin-password" type="password" placeholder="Password" />
+      <button onclick="login()">Login</button>
+    </div>
+    <div id="admin-main" class="hidden">
+      <h2>Active Rooms</h2>
+      <div id="room-list"></div>
+    </div>
+  </div>
+  <script>
+    let adminToken = null;
+
+    async function login() {
+      const password = document.getElementById('admin-password').value;
+      const response = await fetch('/admin/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ password })
+      });
+      if (response.ok) {
+        const { token } = await response.json();
+        adminToken = token;
+        document.getElementById('admin-login').style.display = 'none';
+        document.getElementById('admin-main').classList.remove('hidden');
+        loadRooms();
+      } else {
+        alert('Invalid password');
+      }
+    }
+
+    async function loadRooms() {
+      const response = await fetch('/admin/rooms', {
+        headers: { 'Authorization': adminToken }
+      });
+      const rooms = await response.json();
+      const roomList = document.getElementById('room-list');
+      roomList.innerHTML = rooms.map(room => `
+        <div class="room">
+          <h3>Room: ${room.roomId}</h3>
+          <ul>${room.participants.map(user => `
+            <li>${user} <button onclick="kickUser('${room.roomId}', '${user}')">Kick</button></li>
+          `).join('')}</ul>
+        </div>
+      `).join('');
+    }
+
+    async function kickUser(roomId, userId) {
+      await fetch('/admin/kick', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': adminToken
+        },
+        body: JSON.stringify({ roomId, userId })
+      });
+      loadRooms();
+    }
+  </script>
+</body>
+</html>

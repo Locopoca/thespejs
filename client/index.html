@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>theSpejs</title>
+  <link rel="stylesheet" href="style.css">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&family=Wavefont:wght@4..1000&display=swap" rel="stylesheet">
+</head>
+<body>
+  <div id="app" class="login-screen">
+    <header>
+      <h1>theSpejs</h1>
+    </header>
+    <div id="login-section">
+      <input id="username" type="text" placeholder="ENTER YOUR NAME" maxlength="10">
+      <div id="room-selection">
+        <select id="room-list"></select>
+        <button onclick="joinRoomFromLogin()">Enter room</button>
+        <button onclick="createRoomFromLogin()">New room</button>
+      </div>
+    </div>
+  </div>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.2/socket.io.js"></script>
+  <script>
+    let userId;
+
+    function validateUsername() {
+      const usernameInput = document.getElementById('username');
+      userId = usernameInput.value.trim();
+      if (!userId) {
+        alert('Please enter a name.');
+        return false;
+      }
+      return true;
+    }
+
+    async function loadRooms() {
+      const response = await fetch('/rooms');
+      const rooms = await response.json();
+      const roomList = document.getElementById('room-list');
+      roomList.innerHTML = rooms.map(room => `<option value="${room}">${room}</option>`).join('');
+    }
+
+    async function createRoomFromLogin() {
+      if (!validateUsername()) return;
+      const response = await fetch('/create-room', { method: 'POST' });
+      const { roomId } = await response.json();
+      window.location.href = `/app.html?room=${roomId}&user=${encodeURIComponent(userId)}`;
+    }
+
+    function joinRoomFromLogin() {
+      if (!validateUsername()) return;
+      const roomId = document.getElementById('room-list').value;
+      window.location.href = `/app.html?room=${roomId}&user=${encodeURIComponent(userId)}`;
+    }
+
+    window.addEventListener('load', loadRooms);
+  </script>
+</body>
+</html>
